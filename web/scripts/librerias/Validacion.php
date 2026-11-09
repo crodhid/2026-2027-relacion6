@@ -58,16 +58,18 @@ function validaReal(float &$var, float $min, float $max, float $default): bool
 
 
 /**
- * Función que me valida una fecha, spliteo la fecha para comprobar que tiene el delimitador que yo uso. /
- * si este no tiene una longitud de 3 sabemos que está mal por lo tanto le introduzco la por defecto.
- * saco mis dia meses y años, compruebo que son números y que el año tiene 4 cifras, posterior a eso compruebo que la fecha
- * es valida y que no es posterior a hoy. si todo va bien devuelvo la fecha con el formato correcto, si no la fecha por defecto
+ * Valida una fecha en formato dd/mm/aaaa. Comprueba que tiene 3 partes separadas por "/",
+ * que son números, que el año tiene 4 cifras y que la fecha existe. Si se indica una fecha
+ * mínima, comprueba además que la fecha no es anterior a ella (la misma fecha sí vale).
+ * Si todo va bien deja la fecha con formato correcto (dd/mm/aaaa) y devuelve true;
+ * si falla le asigna la fecha por defecto y devuelve false.
  *
  * @param string $fecha
  * @param string $defecto
- * @return boolean
+ * @param string|null $minima fecha mínima permitida (dd/mm/aaaa), o null para no comparar
+ * @return bool
  */
-function validaFecha(string &$fecha, string $defecto): bool
+function validaFecha(string &$fecha, string $defecto, ?string $minima = null): bool
 {
     $partes = explode("/", trim($fecha));
     if (count($partes) != 3) {
@@ -75,36 +77,37 @@ function validaFecha(string &$fecha, string $defecto): bool
         return false;
     }
 
-    $dia  = $partes[0];
-    $mes  = $partes[1];
-    $año = $partes[2];
+    [$dia, $mes, $anio] = $partes;
 
     // Comprobar que son números y que el año tiene 4 cifras
-    if (!ctype_digit($dia) || !ctype_digit($mes) || !ctype_digit($año) || strlen($año) != 4) {
+    if (!ctype_digit($dia) || !ctype_digit($mes) || !ctype_digit($anio) || strlen($anio) != 4) {
         $fecha = $defecto;
         return false;
     }
 
     // Comprobar que la fecha existe (31/02 no vale)
-    if (!checkdate((int)$mes, (int)$dia, (int)$año)) {
+    if (!checkdate((int)$mes, (int)$dia, (int)$anio)) {
         $fecha = $defecto;
         return false;
     }
 
-    // Preparo el string saneado: 2 cifras para día y mes, 4 para el año
-    $fechaSaneada = sprintf("%02d/%02d/%04d", $dia, $mes, $año);
+    // String saneado: 2 cifras para día y mes, 4 para el año
+    $fechaSaneada = sprintf("%02d/%02d/%04d", $dia, $mes, $anio);
 
-    // Comprobar que la fecha no es posterior a hoy (el "!" pone la hora a 00:00:00, para comparar solo días)
-    $fechaComprobar = DateTime::createFromFormat("!d/m/Y", $fechaSaneada);
-    if ($fechaComprobar > new DateTime("today")) {
-        $fecha = $defecto;
-        return false;
+    // Comparar con la fecha mínima, si se ha indicado
+    if ($minima !== null) {
+        $fechaComprobar = DateTime::createFromFormat("!d/m/Y", $fechaSaneada);
+        $fechaMinima    = DateTime::createFromFormat("!d/m/Y", $minima);
+
+        if ($fechaMinima !== false && $fechaComprobar < $fechaMinima) {
+            $fecha = $defecto;
+            return false;
+        }
     }
 
     $fecha = $fechaSaneada;
     return true;
 }
-
 
 /**
  * Funcion que valida la hora, esta lo splitea en un array,
@@ -169,7 +172,7 @@ function validaEmail(string &$var, string $defecto): bool {
  * @param string $defecto
  * @return bool
  */
-function validaCadena(string &$cadena, int $longitud, string $defecto ):bool{
+function validaCadena(string &$cadena, int $longitud, ?string $defecto = null):bool{
     if (mb_strlen($cadena) > $longitud) {
         $cadena = $defecto;
         return false;
