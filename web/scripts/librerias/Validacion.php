@@ -12,7 +12,7 @@ use DateTime;
  * @param integer $default
  * @return boolean
  */
-function validaEntero(int &$var, int $min, int $max, int $default): bool
+function validaEntero(int $var, int $min, int $max, int $default): bool
 {
     $resultado = filter_var($var, FILTER_VALIDATE_INT, [
         'options' => [
@@ -39,7 +39,7 @@ function validaEntero(int &$var, int $min, int $max, int $default): bool
  * @param integer $default
  * @return void
  */
-function validaReal(float &$var, float $min, float $max, float $default): bool
+function validaReal(float $var, float $min, float $max, float $default): bool
 {
     $resultado = filter_var($var, FILTER_VALIDATE_FLOAT, [
         'options' => [
