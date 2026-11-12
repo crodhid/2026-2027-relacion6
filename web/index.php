@@ -23,7 +23,7 @@ function cuerpo()
 {
 ?>
     <br><br>
-    <a href="./aplicacion/pruebas/index.php">Acceso a pruebas</a>
+    <a href="./aplicacion/principal/index.php">Relacion 6</a>
     
 
 <?php

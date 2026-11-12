@@ -23,13 +23,12 @@ abstract class MuebleBase
     private string $_fechaFinVenta;
     private float $_precio;
 
-    //Propiedad privada de tipo caracteristica
+    // Propiedad privada de tipo Caracteristicas
     private Caracteristicas $_caracteristica;
 
-
     /**
-     * Constructor en el cual todo vamos a ir metiendolo con set, validando que no me devuelve falso.
-     * Si me devuelve falso tengo que meterle mis datos por defecto 
+     * Constructor: todo se asigna con los set. Si el nombre falla se lanza excepción;
+     * en cualquier otro campo, si falla el set se asigna el valor por defecto.
      */
     public function __construct(
         string $nombre,
@@ -72,11 +71,11 @@ abstract class MuebleBase
             $this->_precio = 30;
         }
 
+        // Inicializamos el objeto de características
+        $this->_caracteristica = new Caracteristicas();
+
         self::$_mueblesCreados++;
     }
-
-
-
 
     /**
      * No se permite la sobrecarga dinámica de propiedades
@@ -97,9 +96,6 @@ abstract class MuebleBase
     /**
      * Comprueba que el nombre no esté vacío ni supere 40 caracteres.
      * Lo guarda en mayúsculas. Si falla, no asigna nada.
-     *
-     * @param string $nombre
-     * @return bool
      */
     public function setNombre(string $nombre): bool
     {
@@ -121,9 +117,6 @@ abstract class MuebleBase
 
     /**
      * Añade "FaMu:" al principio si no lo tiene y recorta a 30 caracteres.
-     *
-     * @param string $fabricante
-     * @return bool
      */
     public function setFabricante(string $fabricante): bool
     {
@@ -144,13 +137,10 @@ abstract class MuebleBase
 
     /**
      * Comprueba que el país no supere 20 caracteres. Si falla devuelve false
-     *
-     * @param string $pais
-     * @return bool
      */
     public function setPais(string $pais): bool
     {
-        if (!validaCadena($pais, 30)) {
+        if (!validaCadena($pais, 20)) {
             return false;
         }
 
@@ -158,11 +148,8 @@ abstract class MuebleBase
         return true;
     }
 
-
     /**
-     * Función que devuelve el año
-     *
-     * @return int
+     * AÑO
      */
     public function getAnio(): int
     {
@@ -170,14 +157,11 @@ abstract class MuebleBase
     }
 
     /**
-     * Función que valida si el año es correcto o no antes de hacerle el set
-     *
-     * @param int $anio
-     * @return boolean
+     * Valida que el año esté entre 2020 y el año actual
      */
     public function setAnio(int $anio): bool
     {
-        if (!validaEntero($anio, 2020, 2026, 2020)) {
+        if (!validaEntero($anio, 2020, (int) date('Y'), 2020)) {
             return false;
         }
 
@@ -185,11 +169,8 @@ abstract class MuebleBase
         return true;
     }
 
-
     /**
-     * Función que devuelve la fecha de inicio de venta
-     *
-     * @return string
+     * FECHA INICIO VENTA
      */
     public function getFechaIniVenta(): string
     {
@@ -197,13 +178,11 @@ abstract class MuebleBase
     }
 
     /**
-     * Función para verificar si la fecha introducida es correcta, si no lo es devuelve false
-     * @param string $fecha
-     * @return boolean
+     * Valida que la fecha no sea anterior al 1 de enero del año de fabricación
      */
     public function setFechaIniVenta(string $fecha): bool
     {
-        //Creo mi fecha minima
+        // Fecha mínima: 1 de enero del año de inicio de fabricación
         $fechaMinima = "01/01/" . $this->_anio;
         if (!validaFecha($fecha, "01/01/2020", $fechaMinima)) {
             return false;
@@ -213,9 +192,7 @@ abstract class MuebleBase
     }
 
     /**
-     * Función que devuelve la fecha final de venta
-     *
-     * @return string
+     * FECHA FIN VENTA
      */
     public function getFechaFinVenta(): string
     {
@@ -223,10 +200,7 @@ abstract class MuebleBase
     }
 
     /**
-     * Función que valida la fecha final de venta
-     *
-     * @param string $fecha
-     * @return boolean
+     * Valida que la fecha no sea anterior a la fecha de inicio de venta
      */
     public function setFechaFinVenta(string $fecha): bool
     {
@@ -238,9 +212,7 @@ abstract class MuebleBase
     }
 
     /**
-     * Función que me devuelve el precio
-     *
-     * @return float
+     * PRECIO
      */
     public function getPrecio(): float
     {
@@ -248,9 +220,7 @@ abstract class MuebleBase
     }
 
     /**
-     * Función que me establece el precio, si todo sale bien devuelve true, si sale mal devuelve false
-     *
-     * @return boolean
+     * El precio no puede ser menor de 30
      */
     public function setPrecio(float $precio): bool
     {
@@ -262,17 +232,14 @@ abstract class MuebleBase
     }
 
     /**
-     * Función que heredarán las clases hijas, esta devuelve un array de las propiedades que se le va a añadir
-     *
-     * @return array
+     * Será redefinida en las clases hijas: devuelve un array con el nombre
+     * de las propiedades adicionales a la clase base
      */
-    abstract function damePropiedadesAdicionales(): array;
+    abstract public function damePropiedadesAdicionales(): array;
 
     /**
-     * Función que me indica si puedo crear mas instancias de esta clase o no
-     *
-     * @param integer|null $num
-     * @return boolean
+     * Indica si se pueden crear más instancias y, por referencia,
+     * cuántas quedan por crear
      */
     public static function puedeCrear(?int &$num = null): bool
     {
@@ -280,42 +247,42 @@ abstract class MuebleBase
         return $num > 0;
     }
 
-
     /**
-     * Función la cual añade todos los valores que le pases, si los valores son impares el 
-     * último se desecha
+     * Añade las características recibidas en pares (nombre, valor).
+     * Si el número de argumentos es impar, se desecha el último.
      */
-    public function añadirCaracteristicas(mixed ...$args)
+    public function anadirCaracteristicas(mixed ...$args): void
     {
-        //Desechamos el último elemento si es impar
-        if ((count($args) % 2) == 1) {
+        // Desechamos el último elemento si hay un número impar
+        if (count($args) % 2 == 1) {
             array_pop($args);
         }
-        //Voy guardando clave y valor, voy recorriendo el array de dos en dos
-        for ($i = 0; $i < count($args); $i += 2) {
+
+        // Recorremos el array de dos en dos: clave y valor
+        $total = count($args);
+        for ($i = 0; $i < $total; $i += 2) {
             $this->_caracteristica->{$args[$i]} = $args[$i + 1];
         }
     }
 
     /**
-     * Función la cual devuelve un objeto con las características
-     *
-     * @return object
+     * Devuelve las características asignadas al mueble (como objeto)
      */
-    public function getCaracteristicas(): object {
+    public function getCaracteristicas(): Caracteristicas
+    {
         return $this->_caracteristica;
     }
 
-
     /**
-     * Método toString
-     *
-     * @return string
+     * Convierte la instancia en cadena, incluyendo las características
      */
-    public function __toString()
+    public function __toString(): string
     {
-        return "MUEBLE de clase" . get_class() . " con nombre " . $this->getNombre() . ", fabricante" . $this->getFabricante() .
-            ", fabricado en " . $this->getPais() . " a partir del año " . $this->getAnio() . ", vendido desde " . $this->getFechaIniVenta() .
-            " hasta " . $this->getFechaFinVenta() . ", precio" . $this->getPrecio();
+        return "MUEBLE de clase " . static::class . " con nombre " . $this->getNombre() .
+            ", fabricante " . $this->getFabricante() .
+            ", fabricado en " . $this->getPais() . " a partir del año " . $this->getAnio() .
+            ", vendido desde " . $this->getFechaIniVenta() . " hasta " . $this->getFechaFinVenta() .
+            ", precio " . $this->getPrecio() .
+            ", características: " . $this->_caracteristica;
     }
 }

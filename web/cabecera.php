@@ -9,6 +9,7 @@ if (MODO_TRABAJO=="produccion")
     else 
         error_reporting(E_ALL);  
 
+// Autocarga original (sin cambios)
 spl_autoload_register(function ($clase){
     $ruta=RUTABASE."/scripts/clases/";
     $fichero=$ruta."$clase.php";
@@ -23,8 +24,20 @@ spl_autoload_register(function ($clase){
         }
 });
 
+// Autocarga de las clases de la práctica (curso2026).
+// El tercer parámetro (true) hace que se consulte ANTES que la anterior;
+// si el fichero no existe aquí, la autocarga original sigue su camino.
+spl_autoload_register(function ($clase){
+    $fichero = RUTABASE . "/aplicacion/clases/curso2026/$clase.php";
+
+    if (file_exists($fichero))
+        {
+            require_once($fichero);
+        }
+}, true, true);
+
 include(RUTABASE."/aplicacion/plantilla/plantilla.php");
 include(RUTABASE. "/scripts/librerias/Validacion.php");
-include(RUTABASE. "/aplicacion/clases/curso2026");
+// Borrada la línea include(RUTABASE. "/aplicacion/clases/curso2026"); (era un include de una carpeta)
 
 //creo todos los objetos que necesita mi aplicación
