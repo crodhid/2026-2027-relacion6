@@ -1,110 +1,107 @@
 <?php
 
-
 include_once(dirname(__FILE__) . "/../../cabecera.php");
-require_once (__DIR__ . '/../datos/Muebles.php');
+require_once(__DIR__ . '/../datos/Muebles.php');
 
-//Incluyo mis dos librerias (apis)
+mb_internal_encoding("UTF-8");
+
 //controlador
 
 $ubicacion = [
     "pagina principal" => "../../index.php",
-    "relacion 5" => "./index.php",
-    "Ejercicio 2" => "Ejercicio2.php"
+    "tienda" => "./index.php"
 ];
-
-//Mi array de valores del formulario
-$valores = [
-    "nombre" => "",
-    "contraseña" => "",
-    "fecha_nacimiento" => "",
-    "fecha_carnet" => [
-        "dia" => "",
-        "mes" => "",
-        "año" => ""
-    ],
-    "hora_levantarse" => "",
-    "estado" => null,
-    "estudios" => [],
-    "hermanos" => 0,
-    "sueldo" => 1100
-];
-
-$errores = [];
 
 /**
- * Mi variable de mi clase muebles donde tengo mi array indexado
+ * Array indexado de muebles (definido en datos/Muebles.php)
  */
 $arrayMuebles = $muebles;
 
-$tablaMueblesString = tablaMuebles($arrayMuebles);
-/**
- * Comprobamos que se ha enviado el formulario
- */
-if (isset($_POST["enviar"])) {
+// Índice que llega del select del formulario (POST)
+$indicePost = is_string($_POST["muebles"] ?? null) ? $_POST["muebles"] : "";
 
-    
+// Botón Modificar Mueble: redirige a la página de modificación pasando el índice por la URL
+if (isset($_POST["modificar"]) && isset($arrayMuebles[$indicePost])) {
+    header("Location: ./mueblemodificar.php?mueble=" . urlencode($indicePost));
+    exit;
 }
 
-//Solo muestro el resumen si se ha enviado el formulario y no hay ningún error
-$mostrarResumen = isset($_POST["enviar"]) && empty($errores);
+// Botón Mostrar Mueble: redirige a esta misma página pasando el índice por la URL
+if (isset($_POST["mostrar"]) && isset($arrayMuebles[$indicePost])) {
+    header("Location: ./index.php?mostrar=" . urlencode($indicePost));
+    exit;
+}
+
+// Si venimos de la redirección de "Mostrar", el índice llega por GET
+$indiceSel = is_string($_GET["mostrar"] ?? null) ? $_GET["mostrar"] : "";
+$muebleMostrar = $arrayMuebles[$indiceSel] ?? null;
+
+$tablaMueblesString = tablaMuebles($arrayMuebles);
 
 //dibuja la plantilla de la vista
 inicioCabecera("APLICACION PRIMER TRIMESTRE");
 
-
 cabecera();
 finCabecera();
-inicioCuerpo("2DAW APLICACION", $ubicacion);
-cuerpo($valores, $errores, $tablaMueblesString); //llamo a la vista
+inicioCuerpo("TIENDA", $ubicacion);
+cuerpo($tablaMueblesString, $arrayMuebles, $indiceSel, $muebleMostrar); //llamo a la vista
 finCuerpo();
 // **********************************************************
-////vista cabecera donde podemos ver otros enlaces 
 
+////vista cabecera donde podemos ver otros enlaces
 function cabecera() {}
 
 //vista
-function cuerpo(array $valores, array $errores, string $tablaMueblesString)
+function cuerpo(string $tablaMueblesString, array $arrayMuebles, string $indiceSel, ?MuebleBase $muebleMostrar)
 {
-
     echo $tablaMueblesString;
-    // //Si todo es correcto no se muestra el formulario, solo el resumen
-    // if ($mostrarResumen) {
-    //     echo resumen($valores);
-    //     return;
-    // }
+    echo formulario($arrayMuebles, $indiceSel);
 
-    // //LOS ECHO SE PONEN EN TODA LA PRÁCTICA PARA QUE SI LE DA ERROR AL MADNA EL FORMULARIO,
-    // // QUE EL FORMULARIO SE QUEDE RELLENO
-
-    // if ($errores) {
-    //     echo "<div class = 'error'>";
-    //     foreach ($errores as $clave => $error) {
-    //         echo "$clave => $error <br>";
-    //     }
-    //     echo "</div>";
-    // }
-
-    // //llamo a la función que dibuja el formulario
-    // echo formulario($valores, $errores);
+    if ($muebleMostrar !== null) {
+        echo mostrarMueble($muebleMostrar);
+    }
 }
 
+
 /**
- * Función que dibuja el formulario. Está separada de la vista, que es la que la llama.
+ * Dibuja el formulario con el select de muebles y los dos botones de envío.
  *
- * @param array $valores valores a mostrar en cada campo
- * @param array $errores errores de validación
+ * @param array $muebles array indexado de muebles
+ * @param string $indiceSel índice seleccionado (para que el select se quede marcado)
  * @return string HTML del formulario
  */
-function formulario(array $valores, array $errores): string
+function formulario(array $muebles, string $indiceSel = ""): string
 {
     ob_start();
 ?>
-    
+    <form method="post" action="./index.php">
+        <p>
+            <label>Mueble:
+                <select name="muebles">
+                    <?php foreach ($muebles as $indice => $mueble) { ?>
+                        <option value="<?php echo $indice; ?>"
+                            <?php if ((string) $indice === $indiceSel) { echo "selected"; } ?>>
+                            <?php echo $indice . " - " . get_class($mueble) . " - " . $mueble->getNombre() . " - " . $mueble->getPrecio() . " €"; ?>
+                        </option>
+                    <?php } ?>
+                </select>
+            </label>
+        </p>
+        <p>
+            <input type="submit" name="mostrar" value="Mostrar Mueble">
+            <input type="submit" name="modificar" value="Modificar Mueble" formtarget="_blank">
+        </p>
+    </form>
 <?php
     return ob_get_clean();
 }
 
+/**
+ * Dibuja la tabla con todos los muebles.
+ *
+ * @param array $muebles array indexado de muebles
+ * @return string HTML de la tabla
+ */
 function tablaMuebles(array $muebles): string
 {
     $html = "<table>";
@@ -126,13 +123,37 @@ function tablaMuebles(array $muebles): string
 }
 
 /**
- * Función que dibuja el resumen con los datos introducidos.
- * Muestra el texto de estado y estudios en lugar de su código.
+ * Muestra todas las propiedades del mueble, una por línea, sin usar la conversión a cadena.
  *
- * @param array $valores datos ya validados
- * @return string HTML del resumen
+ * @param MuebleBase $mueble mueble seleccionado
+ * @return string HTML con las propiedades y características
  */
-function resumen(array $valores)
+function mostrarMueble(MuebleBase $mueble): string
 {
-    
+    $html = "<p>Clase: " . get_class($mueble) . "</p>";
+    $html .= "<p>Nombre: " . $mueble->getNombre() . "</p>";
+    $html .= "<p>Fabricante: " . $mueble->getFabricante() . "</p>";
+    $html .= "<p>País: " . $mueble->getPais() . "</p>";
+    $html .= "<p>Año: " . $mueble->getAnio() . "</p>";
+    $html .= "<p>Fecha inicio venta: " . $mueble->getFechaIniVenta() . "</p>";
+    $html .= "<p>Fecha fin venta: " . $mueble->getFechaFinVenta() . "</p>";
+    $html .= "<p>Precio: " . $mueble->getPrecio() . " €</p>";
+
+    // Propiedades adicionales, según la clase hija
+    foreach ($mueble->damePropiedadesAdicionales() as $propiedad) {
+        $getter = "get" . mb_ucfirst($propiedad);
+        $html .= "<p>" . $propiedad . ": " . $mueble->$getter() . "</p>";
+    }
+
+    // Características (el foreach las recorre en orden inverso)
+    $html .= "<p>Características:</p><ul>";
+    foreach ($mueble->getCaracteristicas() as $nombre => $valor) {
+        if (is_bool($valor)) {
+            $valor = $valor ? "true" : "false";
+        }
+        $html .= "<li>" . $nombre . ": " . $valor . "</li>";
+    }
+    $html .= "</ul>";
+
+    return $html;
 }
