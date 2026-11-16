@@ -22,6 +22,7 @@ abstract class MuebleBase
     private string $_fechaIniVenta;
     private string $_fechaFinVenta;
     private float $_precio;
+    private Materiales $_material;
 
     // Propiedad privada de tipo Caracteristicas
     private Caracteristicas $_caracteristica;
@@ -37,7 +38,8 @@ abstract class MuebleBase
         int $anio = 2020,
         string $fechaIniVenta = '01/01/2020',
         string $fechaFinVenta = '31/12/2040',
-        float $precio = 30
+        float $precio = 30,
+        int $material = 10
     ) {
         if (!self::puedeCrear()) {
             throw new Exception("No se pueden crear más muebles, has llegado al límite de instancias");
@@ -69,6 +71,10 @@ abstract class MuebleBase
 
         if (!$this->setPrecio($precio)) {
             $this->_precio = 30;
+        }
+
+        if (!$this->setMaterial($material)) {
+            $this->setMaterial(10);
         }
 
         // Inicializamos el objeto de características
@@ -232,6 +238,36 @@ abstract class MuebleBase
     }
 
     /**
+     * Función que me da el tipo de material del que está hecho el mueble
+     *
+     * @return string
+     */
+    public function getMaterialDescripcion():string{
+        return $this->_material->descripcion();
+    }
+
+    /**
+     * Función que dependiendo de un valor numérico me asigna un valor de mi enumerado en mi propiedad
+     * materiales
+     *
+     * @param integer $valor
+     * @return boolean
+     */
+    public function setMaterial(int $valor):bool{
+        $booleano = false;
+        //Array con mi enumerado
+        $arrayEnum = Materiales::casos();
+        //Recorremos el array comprobando si existe o no
+        for ($i=0; $i < count($arrayEnum); $i++) { 
+            if ($arrayEnum[$i]->valor() == $valor) {
+                $this->_material = $arrayEnum[$i];
+                $booleano = true;
+            }
+        }
+        return $booleano;
+    }
+
+    /**
      * Será redefinida en las clases hijas: devuelve un array con el nombre
      * de las propiedades adicionales a la clase base
      */
@@ -283,6 +319,7 @@ abstract class MuebleBase
             ", fabricado en " . $this->getPais() . " a partir del año " . $this->getAnio() .
             ", vendido desde " . $this->getFechaIniVenta() . " hasta " . $this->getFechaFinVenta() .
             ", precio " . $this->getPrecio() .
-            ", características: " . $this->_caracteristica;
+            ", características: " . $this->_caracteristica . 
+            ", de material " . $this->getMaterialDescripcion();
     }
 }

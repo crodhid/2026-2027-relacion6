@@ -1,10 +1,13 @@
 <?php
 
-class Caracteristicas implements IteratorAggregate{
+class Caracteristicas implements IteratorAggregate
+{
     //Array donde vamos a ir guardando mis datos de las carácteristicas
     private array $_datos = [];
     //La inicializamos a false hasta que se introduzca ULTIMA
     private bool $_cerrada = false;
+    private int $_numero_serie;
+
 
 
     /**
@@ -14,14 +17,19 @@ class Caracteristicas implements IteratorAggregate{
      * @param string $nombre
      * @param mixed $valor
      */
-    public function __set(string $nombre,mixed $valor)
+    public function __set(string $nombre, mixed $valor)
     {
+        //Comrprobamos que el nombre no es número_serie ya que no se puede insertar en ningún lado
+        if ($nombre == "numero_serie") {
+            throw new Exception("No puedes añadir la carácterística numero_serie");
+        }
+
         //Primero tenemos que comprobar si la clave existe para ver si la está modificando y no insertando
         $existe = array_key_exists($nombre, $this->_datos);
         if (!$existe && $this->_cerrada) {
             throw new Exception("No puedes añadir más características una vez añadido ULTIMA");
-            
         }
+
 
         $this->_datos[$nombre] = $valor;
 
@@ -34,12 +42,25 @@ class Caracteristicas implements IteratorAggregate{
     /**
      * Función en la cual comprobamos si existe la key que me está pasando dentro de mi array,
      * si no existe devuelvo una excepción, si existe devuelvo el valor.
+     * 
+     * Lo modificamos para ver si el nombre es numero_serie ya que este va a ser siempre aleatorio
+     * y no se guarda en ningún lado
      *
      * @param string $nombre
      * @return mixed
      */
-    public function __get(string $nombre):mixed
+    public function __get(string $nombre): mixed
     {
+        //Defino un array con los números
+        $arrayNumeros = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+
+        //Si el nombre que quieren obtener es la característica la relleno de numeros aleatorios
+        if ($nombre == "numero_serie") {
+            for ($i = 0; $i < 15; $i++) {
+                $this->_numero_serie .= $arrayNumeros[rand(0,(count($arrayNumeros)-1))];
+            }
+            return $this->_numero_serie;
+        }
         if (!array_key_exists($nombre, $this->_datos)) {
             throw new Exception("La clave no existe");
         }
@@ -52,7 +73,7 @@ class Caracteristicas implements IteratorAggregate{
      * @param string $nombre
      * @return boolean
      */
-    public function __isset(string $nombre):bool
+    public function __isset(string $nombre): bool
     {
         return isset($this->_datos[$nombre]);
     }
@@ -66,7 +87,7 @@ class Caracteristicas implements IteratorAggregate{
     #[Override]
     public function getIterator(): Traversable
     {
-        return new ArrayIterator(array_reverse($this->_datos),true);
+        return new ArrayIterator(array_reverse($this->_datos), true);
     }
 
     /**
@@ -74,14 +95,13 @@ class Caracteristicas implements IteratorAggregate{
      *
      * @return string
      */
-    public function __toString():string
+    public function __toString(): string
     {
         $cadena = "";
         foreach ($this->_datos as $key => $value) {
-            $cadena .= $key . ":" . $value .";";
-        } 
+            $cadena .= $key . ":" . $value . ";";
+        }
 
         return $cadena;
     }
-
 }

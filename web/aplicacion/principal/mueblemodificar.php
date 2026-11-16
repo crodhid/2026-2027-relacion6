@@ -27,6 +27,7 @@ $mueble = $muebles[$indice] ?? null;
 $valores = [];
 $errores = [];
 $mostrarResumen = false;
+$todosMateriales = Materiales::casos();
 
 
 if ($mueble !== null) {
@@ -40,7 +41,8 @@ if ($mueble !== null) {
         "anio" => $mueble->getAnio(),
         "fechaIniVenta" => $mueble->getFechaIniVenta(),
         "fechaFinVenta" => $mueble->getFechaFinVenta(),
-        "precio" => $mueble->getPrecio()
+        "precio" => $mueble->getPrecio(),
+        "material" => 0
     ];
 
 
@@ -59,7 +61,7 @@ if ($mueble !== null) {
         }
 
 
-        $errores = validar($mueble, $valores);
+        $errores = validar($mueble, $valores, $todosMateriales);
 
 
         if (empty($errores)) {
@@ -77,7 +79,7 @@ inicioCabecera("APLICACION PRIMER TRIMESTRE");
 cabecera();
 finCabecera();
 inicioCuerpo("TIENDA - MODIFICAR MUEBLE", $ubicacion);
-cuerpo($mueble, $indice, $valores, $errores, $mostrarResumen); //llamo a la vista
+cuerpo($mueble, $indice, $valores, $errores, $mostrarResumen, $todosMateriales); //llamo a la vista
 finCuerpo();
 // **********************************************************
 
@@ -86,7 +88,7 @@ function cabecera() {}
 
 
 //vista
-function cuerpo(?MuebleBase $mueble, string $indice, array $valores, array $errores, bool $mostrarResumen)
+function cuerpo(?MuebleBase $mueble, string $indice, array $valores, array $errores, bool $mostrarResumen, array $todosMateriales)
 {
     if ($mueble === null) {
         echo "<p>No se ha indicado ningún mueble válido.</p>";
@@ -111,7 +113,7 @@ function cuerpo(?MuebleBase $mueble, string $indice, array $valores, array $erro
     }
 
 
-    echo formulario($mueble, $indice, $valores);
+    echo formulario($mueble, $indice, $valores, $todosMateriales);
 }
 
 
@@ -139,7 +141,7 @@ function recoge(string $campo): string
  * @param array $valores valores a mostrar en cada campo
  * @return string HTML del formulario
  */
-function formulario(MuebleBase $mueble, string $indice, array $valores): string
+function formulario(MuebleBase $mueble, string $indice, array $valores, array $todosMateriales): string
 {
     ob_start();
 ?>
@@ -198,6 +200,19 @@ function formulario(MuebleBase $mueble, string $indice, array $valores): string
             </label>
         </p>
 
+        <p>
+            <label>Material:
+                <select name="materiales">
+                    <?php for($i = 0; $i < count($todosMateriales); $i++) { ?>
+                        <option value="<?php echo $todosMateriales[$i]->descripcion(); ?>"
+                            >
+                            <?php echo $todosMateriales[$i]->descripcion() ?>
+                        </option>
+                    <?php } ?>
+                </select>
+            </label>
+        </p>
+
 
         <?php if ($mueble instanceof MuebleReciclado) { ?>
             <p>
@@ -237,7 +252,7 @@ function formulario(MuebleBase $mueble, string $indice, array $valores): string
  * @param array $valores datos enviados
  * @return array errores encontrados (vacío si todo es correcto)
  */
-function validar(MuebleBase $mueble, array $valores): array
+function validar(MuebleBase $mueble, array $valores, array $todosMateriales): array
 {
     $errores = [];
 
@@ -300,6 +315,13 @@ function validar(MuebleBase $mueble, array $valores): array
         }
     }
 
+    if (isset($_POST["materiales"])) {
+        for ($i=0; $i < count($todosMateriales) ; $i++) { 
+            if ($todosMateriales[$i] == $_POST["materiales"]) {
+                $valores["material"] = $todosMateriales[$i]->valor();
+            }
+        }
+    }
 
     return $errores;
 }
@@ -317,6 +339,9 @@ function actualizar(MuebleBase $mueble, array $valores): void
     $mueble->setFechaIniVenta($valores["fechaIniVenta"]);
     $mueble->setFechaFinVenta($valores["fechaFinVenta"]);
     $mueble->setPrecio((float) $valores["precio"]);
+    $mueble->setMaterial((int)$valores["material"]);
+    
+
 
 
     if ($mueble instanceof MuebleReciclado) {
@@ -345,6 +370,7 @@ function resumen(MuebleBase $mueble): string
     $html .= "<p>Fecha inicio venta: " . $mueble->getFechaIniVenta() . "</p>";
     $html .= "<p>Fecha fin venta: " . $mueble->getFechaFinVenta() . "</p>";
     $html .= "<p>Precio: " . $mueble->getPrecio() . " €</p>";
+    $html .= "<p>Material: " . $mueble->getMaterialDescripcion() . "</p>";
 
 
     foreach ($mueble->damePropiedadesAdicionales() as $propiedad) {

@@ -32,6 +32,9 @@ if (isset($_POST["mostrar"]) && isset($arrayMuebles[$indicePost])) {
     exit;
 }
 
+
+
+
 // Si venimos de la redirección de "Mostrar", el índice llega por GET
 $indiceSel = is_string($_GET["mostrar"] ?? null) ? $_GET["mostrar"] : "";
 $muebleMostrar = $arrayMuebles[$indiceSel] ?? null;
@@ -105,7 +108,7 @@ function formulario(array $muebles, string $indiceSel = ""): string
 function tablaMuebles(array $muebles): string
 {
     $html = "<table>";
-    $html .= "<thead><tr><th>Índice</th><th>Tipo</th><th>Nombre</th><th>Fabricante</th><th>Precio</th></tr></thead>";
+    $html .= "<thead><tr><th>Índice</th><th>Tipo</th><th>Nombre</th><th>Fabricante</th><th>Precio</th><th>Material</th></tr></thead>";
     $html .= "<tbody>";
 
     foreach ($muebles as $indice => $mueble) {
@@ -115,6 +118,7 @@ function tablaMuebles(array $muebles): string
         $html .= "<td>" . $mueble->getNombre() . "</td>";
         $html .= "<td>" . $mueble->getFabricante() . "</td>";
         $html .= "<td>" . $mueble->getPrecio() . " €</td>";
+        $html .= "<td>" . $mueble->getMaterialDescripcion();
         $html .= "</tr>";
     }
 
@@ -138,6 +142,7 @@ function mostrarMueble(MuebleBase $mueble): string
     $html .= "<p>Fecha inicio venta: " . $mueble->getFechaIniVenta() . "</p>";
     $html .= "<p>Fecha fin venta: " . $mueble->getFechaFinVenta() . "</p>";
     $html .= "<p>Precio: " . $mueble->getPrecio() . " €</p>";
+    $html .= "<p>Material: " . $mueble->getMaterialDescripcion() ;
 
     // Propiedades adicionales, según la clase hija
     foreach ($mueble->damePropiedadesAdicionales() as $propiedad) {
