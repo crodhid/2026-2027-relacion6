@@ -99,7 +99,7 @@ abstract class MuebleBase
      */
     public function setNombre(string $nombre): bool
     {
-        $nombre = mb_strtoupper(trim($nombre));
+        $nombre = mb_strtoupper(mb_trim($nombre));
         if ($nombre === '' || mb_strlen($nombre) > 40) {
             return false;
         }
@@ -120,9 +120,9 @@ abstract class MuebleBase
      */
     public function setFabricante(string $fabricante): bool
     {
-        if (!str_starts_with($fabricante, "FaMu:")) {
-            $fabricante = 'FaMu:' . $fabricante;
-        }
+        if (mb_substr($fabricante, 0, 5) !== "FaMu:") {
+    $fabricante = 'FaMu:' . $fabricante;
+}
         $this->_fabricante = mb_substr($fabricante, 0, 30);
         return true;
     }
